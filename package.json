@@ -1,0 +1,32 @@
+{
+  "name": "express-rest",
+  "version": "0.0.0",
+  "description": "Simple REST for Node with Express",
+  "main": "expressRest.js",
+  "scripts": {
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alancnet/express-rest.git"
+  },
+  "keywords": [
+    "express",
+    "rest",
+    "webapi"
+  ],
+  "author": "Alan Colon",
+  "license": "Apache-2",
+  "bugs": {
+    "url": "https://github.com/alancnet/express-rest/issues"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "nodeunit": "~0.9.0",
+    "grunt-contrib-nodeunit": "~0.4.1",
+    "grunt-contrib-watch": "~0.6.1",
+    "body-parser": "~1.6.7",
+    "nodeunit-express": "0.0.1",
+    "express": "~4.8.7"
+  }
+}
