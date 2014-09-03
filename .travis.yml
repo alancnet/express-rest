@@ -1,0 +1,15 @@
+language: node_js
+
+node_js:
+  - 0.10
+
+install:
+  - npm install
+  - npm install -g grunt
+
+before_script:
+
+script:
+  - grunt nodeunit
+
+after_script:
