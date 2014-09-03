@@ -1,5 +1,6 @@
 express-rest
 =========
+![Build](https://api.travis-ci.org/alancnet/express-rest.svg)
 ![Downloads](http://img.shields.io/npm/dm/express-rest.svg) 
 ![Version](http://img.shields.io/npm/v/express-rest.svg) 
 ![License](http://img.shields.io/npm/l/express-rest.svg) 
