@@ -24,7 +24,7 @@ Usage
 
 ```javascript
 var express = require('express'),
-    expressRest = require('../expressRest');
+    expressRest = require('express-rest');
 
 var app = express();
 var rest = expressRest(app);
