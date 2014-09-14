@@ -29,6 +29,7 @@
     "express": "~4.8.7"
   },
   "dependencies": {
-    "body-parser": "^1.7.0"
+    "concat-stream": "^1.4.6",
+    "string_decoder": "^0.10.31"
   }
 }

@@ -32,27 +32,36 @@ module.exports = {
             callback();
         },
         'GET -> ok(list)': function(test) {
+
             this.request.get('/api/entity')
+                .set('accept', 'application/json')
                 .expect(function(response) {
                     test.ok(response.body)
                     test.equal(response.statusCode, 200);
                     test.equal(response.headers['content-type'], 'application/json; charset=utf-8');
-                    test.ok(JSON.parse(response.body)[0].pass, 'response has data passed to ok()');
+
+                    test.doesNotThrow(function() {
+                        test.ok(JSON.parse(response.body)[0].pass);
+                    }, 'response has data passed to ok()');
                     test.done();
                 });
         },
         'GET with ID -> ok(body)': function(test) {
             this.request.get('/api/entity/1')
+                .set('accept', 'application/json')
                 .expect(function(response) {
                     test.ok(response.body)
                     test.equal(response.statusCode, 200);
                     test.equal(response.headers['content-type'], 'application/json; charset=utf-8');
-                    test.ok(JSON.parse(response.body).pass, 'response has data passed to ok()');
+                    test.doesNotThrow(function() {
+                        test.ok(JSON.parse(response.body).pass);
+                    }, 'response has data passed to ok()');
                     test.done();
                 });
         },
         'PUT with ID -> accepted(location)': function(test) {
             this.request.put('/api/entity/1')
+                .set('accept', 'application/json')
                 .set('content-type', 'application/json')
                 .write('{"id": 1, "pass": true}')
                 .end(function(response) {
@@ -63,6 +72,7 @@ module.exports = {
         },
         'POST with ID and Body -> created(location, body)': function(test) {
             this.request.post('/api/entity')
+                .set('accept', 'application/json')
                 .set('content-type', 'application/json')
                 .write('{"id": 1, "pass": true}')
                 .end(function(response) {
@@ -70,7 +80,9 @@ module.exports = {
                     test.equal(response.headers.location, '/api/entity/1', 'returns location');
                     test.ok(response.body)
                     test.equal(response.headers['content-type'], 'application/json; charset=utf-8');
-                    test.ok(JSON.parse(response.body).pass, 'response has data passed to ok()');
+                    test.doesNotThrow(function() {
+                        test.ok(JSON.parse(response.body).pass);
+                    }, 'response has data passed to ok()');
                     test.done();
                 });
         }

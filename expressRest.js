@@ -1,7 +1,7 @@
-var bodyParser = require('body-parser'),
-    jsonBodyParser = bodyParser.json();
+var concatStream = require('concat-stream'),
+    stringDecoder = require('string_decoder');
 
-module.exports = function(app) {
+module.exports = function(app, options) {
     if (!app) throw new Error('Must provide express instance.');
 
 
@@ -10,12 +10,28 @@ module.exports = function(app) {
         put: put,
         post: post,
         'delete': delete_
+
     };
+    var serializers = {
+        json: jsonSerializer(),
+        xml: xmlSerializer()
+    };
+
     var methods = ['GET', 'PUT', 'POST', 'DELETE'];
     var maxParams = 0;
+    init();
     return rest;
     // reference; http://www.w3schools.com/tags/ref_httpmessages.asp
 
+    function init() {
+        if (options) {
+            if (options.serializers) {
+                for (var key in options.serializers) {
+                    serializers[key] = options.serializers[key];
+                }
+            }
+        }
+    }
 
     function register(app, path, controller) {
         if (typeof controller.get === 'function') {
@@ -50,18 +66,74 @@ module.exports = function(app) {
     function anyHandler(apiHandler) {
         return function(req, res) {
             // parse JSON body
-            jsonBodyParser(req, res, function() {
-                var rest = restResponse(req, res);
-                if (+req.headers['content-length'] && !req.is('json')) {
-                    rest.unsupportedMediaType();
+            var contentType = req.headers['content-type'];
+            if (contentType) {
+                // Parse request body
+                for (var key in serializers) {
+                    if (req.is(key) || contentType == key) {
+                        var ser = serializers[key];
+                        try {
+                            ser.deserialize(req, res, continueRequest);
+                        } catch (ex) {
+                            continueRequest(ex);
+                        }
+                        return;
+                    }
+                }
+                // Could not find a parser.
+                rest.unsupportedMediaType();
+            } else {
+                return continueRequest();
+            }
+
+            function continueRequest(err) {
+                var rest = restResponse(req, res, continueResponse);
+                if (err) {
+                    res.set('Content-Type', 'text/plain');
+                    res.status(500);
+                    res.send(err.toString());
                 } else {
                     apiHandler(req, rest);
                 }
-            })
+            }
+
+            function continueResponse(statusCode, message, data) {
+                res.status(statusCode);
+                res.body = data;
+                for (var key in serializers) {
+                    if (req.accepts(key) || req.headers.accept == key) {
+                        var ser = serializers[key];
+                        try {
+                            ser.serialize(req, res, finishResponse);
+                        } catch (ex) {
+                            finishResponse(ex);
+                        }
+                        return;
+                    }
+                }
+                res.status(415);
+                finishResponse();
+
+                function finishResponse(err) {
+                    if (err) {
+                        // Serialization failed, revert to plain text.
+                        try {
+                            res.set('Content-Type', 'text/plain');
+                            res.status(500);
+                            res.send(err.toString());
+                        } catch (ex) {
+                            console.error('Unable to return exception: ', err, ex);
+                        }
+                    }
+                    res.end();
+                }
+
+            }
+
         }
     }
 
-    function restResponse(req, res) {
+    function restResponse(req, res, next) {
         var rest = {
             request: req,
             response: res,
@@ -118,19 +190,12 @@ module.exports = function(app) {
 
         function status(statusCode, message, header) {
             return function(data) {
-                res.status(statusCode);
                 if (header) {
                     // response data should go into a header, not body.
                     res.set(header, data);
                     data = arguments[1];
                 }
-                if (data) {
-                    res.set('Content-Type', 'Application/json');
-                    var json = JSON.stringify(data);
-                    res.send(json);
-                } else {
-                    res.end();
-                }
+                next(statusCode, message, data);
                 return rest;
             }
 
@@ -138,4 +203,58 @@ module.exports = function(app) {
 
     }
 
+    function jsonSerializer() {
+        var ser = {
+            serialize: serialize,
+            deserialize: deserialize
+        }
+        return ser;
+
+        function deserialize(req, res, next) {
+            req.pipe(concatStream(function(data) {
+                try {
+                    var decoder = new stringDecoder.StringDecoder();
+                    var json = decoder.write(data);
+                    req.body = JSON.parse(json);
+                    next();
+                } catch (ex) {
+                    next(ex);
+                }
+            }));
+        }
+
+        function serialize(req, res, next) {
+            try {
+                res.set('Content-Type', 'application/json');
+                var json = JSON.stringify(res.body);
+                res.send(json);
+                next();
+            } catch (ex) {
+                next(ex);
+            }
+        }
+    }
+
+    function xmlSerializer() {
+        var ser = {
+            serialize: serialize,
+            deserialize: deserialize
+        }
+        return ser;
+
+        function deserialize(req, rest, next) {
+            req.pipe(concatStream(function(data) {
+                var decoder = new stringDecoder.StringDecoder();
+                var xml = decoder.write(data);
+                //TODO: req.body = XML.parse(xml);
+                next();
+            }));
+        }
+
+        function serialize(req, rest, next) {
+            res.set('Content-Type', 'application/xml');
+            //TODO: res.send(XML.stringify(res.body));
+            next();
+        }
+    }
 };
