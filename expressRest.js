@@ -13,8 +13,8 @@ module.exports = function(app, options) {
 
     };
     var serializers = {
-        json: jsonSerializer(),
-        xml: xmlSerializer()
+        json: jsonSerializer()
+        // TODO: xml: xmlSerializer()
     };
 
     var methods = ['GET', 'PUT', 'POST', 'DELETE'];

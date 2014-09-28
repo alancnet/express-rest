@@ -63,8 +63,37 @@ rest.delete('/api/food/:id', function(req, rest) {
 app.listen();
 ```
 
+Custom MIME Types
+--------------------
+
+```javascript
+var express = require('express'),
+    expressRest = require('express-rest');
+
+var app = express();
+var rest = expressRest(app, {
+    serializers: {
+        'text/yaml': {
+            deserialize: function(req, rest, next) {
+                req.body = object;
+                next();
+            },
+            serialize: function(req, rest, next) {
+                rest.send(buffer);
+                next();
+            }
+        }
+    }
+});
+```
+
 
 ### Response functions
+
+Each HTTP response code is conveniently wrapped in an appropriately named function.
+Depending on the status, the parameter can be **body** (state object to be returned),
+**location** (URI to the resource), or **message** (string to describe an error).
+
 |Function                       |#  |Status Text                    |Parameter
 |-------------------------------|---|-------------------------------|---------|
 |continue                       |100|Continue                       |         |
